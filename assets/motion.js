@@ -123,4 +123,17 @@
       .to(q('[data-needle]'), { rotate: 360, duration: 0.45 }, 0.4)
       .to(q('[data-needle]'), { opacity: 0, duration: 0.05 }, 0.86);
   });
+
+  /* Refresh triggers in document order (the original mounts components in page
+     order). Creation order here is per-component-type, so a pinned section
+     created later but sitting higher on the page (e.g. services hscroll above
+     the wipe) would never shift the starts below it. refreshPriority fixes
+     every refresh, including the rAF/load ones scheduled above. */
+  var ordered = ScrollTrigger.getAll().slice().sort(function (a, b) {
+    var ta = a.trigger, tb = b.trigger;
+    if (!ta || !tb || ta === tb) return 0;
+    return (ta.compareDocumentPosition(tb) & 2) ? 1 : -1; /* 2 = PRECEDING */
+  });
+  ordered.forEach(function (st, i) { st.refreshPriority = ordered.length - i; });
+  ScrollTrigger.refresh();
 })();
